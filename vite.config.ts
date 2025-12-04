@@ -1,24 +1,20 @@
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path'; // <--- Imported path
+import { defineConfig, loadEnv } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // We can now remove (process as any) because we installed @types/node
   const env = loadEnv(mode, process.cwd(), '');
-
   return {
     plugins: [react()],
-    
-    // START: Added this block to tell Vite how to handle "@"
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        '@': path.resolve(__dirname, './'),
       },
     },
-    // END
-    
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
-    }
-  };
-});
+      // Correctly expose process.env.API_KEY to the client-side code
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+    },
+  }
+})
