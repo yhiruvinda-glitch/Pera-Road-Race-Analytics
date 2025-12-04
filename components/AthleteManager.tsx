@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { Athlete, EventStandard, PB, RaceSession } from '../types';
 import { formatTime, parseTime, getEventDistance, sortEventsByDistance } from '../utils';
-import { UserPlus, Trash2, Camera, Trophy, Plus, X, ArrowLeft, Activity, MapPin, History, Medal, Zap, Flame, Mountain, Star, Award, Crown, TrendingUp, AlertTriangle, Calendar, UserMinus, UserCheck, Search, BarChart2, Timer } from 'lucide-react';
+import { UserPlus, Trash2, Camera, Trophy, Plus, X, ArrowLeft, MapPin, History, Medal, Zap, Flame, Mountain, Star, Award, Crown, TrendingUp, AlertTriangle, UserMinus, UserCheck, Search, Timer } from 'lucide-react';
 
 interface Props {
   athletes: Athlete[];
@@ -361,7 +360,7 @@ export const AthleteManager: React.FC<Props> = ({ athletes, standards, sessions,
       ...r, 
       date: s.date, 
       eventId: s.eventId, 
-      sessionName: s.name,
+      sessionName: s.name, 
       sessionId: s.id
     })));
     
