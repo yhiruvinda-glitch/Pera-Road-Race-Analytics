@@ -42,12 +42,9 @@ export const generateCoachingReport = async (
   subjectId: string | undefined,
   data: { sessions: RaceSession[], athletes: Athlete[], standards: EventStandard[] }
 ): Promise<string> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    return "API Key not configured. Unable to generate analysis.";
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  // Initialization: Always use process.env.API_KEY directly as per guidelines.
+  // The SDK expects a named parameter: { apiKey: string }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Serialize Context
   const standardsContext = data.standards.map(s => `${s.name}: Gold=${formatTime(s.goldTime)} (k=${s.kValue})`).join("; ");
@@ -142,13 +139,15 @@ export const generateCoachingReport = async (
   }
 
   try {
+    // Model Selection: Using 'gemini-3-pro-preview' for advanced reasoning and strategic coaching analysis.
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-pro-preview",
       contents: promptContext,
       config: {
         systemInstruction: COACH_PERSONA,
       }
     });
+    // Accessing the generated text via the .text property as per guidelines.
     return response.text || "No analysis generated.";
   } catch (error) {
     console.error("Gemini Coach Error:", error);

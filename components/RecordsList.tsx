@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Athlete, RaceSession, EventStandard, Route } from '../types';
 import { formatTime, calculatePoints, sortEventsByDistance } from '../utils';
 import { Trophy, Calendar, MapPin, Medal, Map as MapIcon, List, Star, Filter } from 'lucide-react';
@@ -24,7 +24,40 @@ export const RecordsList: React.FC<Props> = ({ athletes, sessions, standards, ro
   const [viewMode, setViewMode] = useState<'events' | 'courses'>('events');
   const [filterMode, setFilterMode] = useState<'best' | 'all'>('best');
   
-  const sortedStandards = useMemo(() => sortEventsByDistance(standards), [standards]);
+  const sortedStandards = useMemo(() => {
+    // 1. Calculate frequency of entries for each event
+    const counts: Record<string, number> = {};
+    standards.forEach(s => counts[s.id] = 0);
+
+    // Count from all race sessions
+    sessions.forEach(session => {
+      if (counts[session.eventId] !== undefined) {
+        counts[session.eventId] += session.results.length;
+      }
+    });
+
+    // Count from all athlete PBs (including those that might be manual)
+    athletes.forEach(athlete => {
+      athlete.personalBests.forEach(pb => {
+        if (counts[pb.eventId] !== undefined) {
+          counts[pb.eventId] += 1;
+        }
+      });
+    });
+
+    // 2. Sort by count descending, then by name/distance logic
+    return [...standards].sort((a, b) => {
+      const countA = counts[a.id] || 0;
+      const countB = counts[b.id] || 0;
+      
+      if (countA !== countB) {
+        return countB - countA; // Most entries first
+      }
+
+      // Tie-breaker: existing alphanumeric sort
+      return a.name.localeCompare(b.name, undefined, { numeric: true });
+    });
+  }, [standards, sessions, athletes]);
 
   const [selectedEventId, setSelectedEventId] = useState<string>(
     sortedStandards.length > 0 ? sortedStandards[0].id : ''
