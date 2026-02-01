@@ -1,7 +1,7 @@
 import { Athlete, EventStandard, RaceSession, Route } from '@/types';
 
 export const STATIC_DB = {
-  version: "1768926029521",
+  version: "1769968259353",
   athletes: [
   {
     "id": "9ne4350jm",
@@ -123,6 +123,12 @@ export const STATIC_DB = {
         "time": 2222.78,
         "date": "2026-01-20",
         "venue": "Pera 8km Long Course"
+      },
+      {
+        "eventId": "73qhmk9ep",
+        "time": 5820,
+        "date": "2026-02-01",
+        "venue": "Galle Fort"
       }
     ],
     "isActive": true
@@ -208,6 +214,12 @@ export const STATIC_DB = {
     "name": "8km Long Course",
     "goldTime": 1680,
     "kValue": 1.17
+  },
+  {
+    "id": "73qhmk9ep",
+    "name": "Half Marathon",
+    "goldTime": 4500,
+    "kValue": 1.23
   }
 ] as EventStandard[],
   sessions: [
@@ -283,6 +295,49 @@ export const STATIC_DB = {
       }
     ],
     "id": "j8068kl3d"
+  },
+  {
+    "name": "Galle Half Marathon",
+    "venue": "Galle Fort",
+    "routeId": "",
+    "date": "2026-02-01",
+    "eventId": "73qhmk9ep",
+    "isMandatory": false,
+    "notes": "",
+    "results": [
+      {
+        "athleteId": "4peb7o28y",
+        "time": 5820,
+        "points": 729,
+        "rank": 15,
+        "tags": [
+          "PB",
+          "SB"
+        ]
+      }
+    ],
+    "id": "ry0kzdiw1"
+  },
+  {
+    "name": "Galle Half Marathon - 10K",
+    "venue": "Galle Fort",
+    "routeId": "",
+    "date": "2026-02-01",
+    "eventId": "5",
+    "isMandatory": false,
+    "notes": "",
+    "results": [
+      {
+        "athleteId": "9ne4350jm",
+        "time": 2305,
+        "points": 866,
+        "rank": 13,
+        "tags": [
+          "SB"
+        ]
+      }
+    ],
+    "id": "k11jmx1fb"
   }
 ] as RaceSession[],
   routes: [
