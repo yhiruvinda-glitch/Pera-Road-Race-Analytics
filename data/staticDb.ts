@@ -1,7 +1,7 @@
 import { Athlete, EventStandard, RaceSession, Route } from '@/types';
 
 export const STATIC_DB = {
-  version: "1769968259353",
+  version: "1770018735838",
   athletes: [
   {
     "id": "9ne4350jm",
@@ -218,8 +218,8 @@ export const STATIC_DB = {
   {
     "id": "73qhmk9ep",
     "name": "Half Marathon",
-    "goldTime": 4500,
-    "kValue": 1.23
+    "goldTime": 4620,
+    "kValue": 1.25
   }
 ] as EventStandard[],
   sessions: [
@@ -297,28 +297,6 @@ export const STATIC_DB = {
     "id": "j8068kl3d"
   },
   {
-    "name": "Galle Half Marathon",
-    "venue": "Galle Fort",
-    "routeId": "",
-    "date": "2026-02-01",
-    "eventId": "73qhmk9ep",
-    "isMandatory": false,
-    "notes": "",
-    "results": [
-      {
-        "athleteId": "4peb7o28y",
-        "time": 5820,
-        "points": 729,
-        "rank": 15,
-        "tags": [
-          "PB",
-          "SB"
-        ]
-      }
-    ],
-    "id": "ry0kzdiw1"
-  },
-  {
     "name": "Galle Half Marathon - 10K",
     "venue": "Galle Fort",
     "routeId": "",
@@ -338,6 +316,25 @@ export const STATIC_DB = {
       }
     ],
     "id": "k11jmx1fb"
+  },
+  {
+    "name": "Galle Half Marathon",
+    "venue": "Galle Fort",
+    "routeId": "",
+    "date": "2026-02-01",
+    "eventId": "73qhmk9ep",
+    "isMandatory": false,
+    "notes": "",
+    "results": [
+      {
+        "athleteId": "4peb7o28y",
+        "time": 5820,
+        "points": 749,
+        "rank": 15,
+        "tags": []
+      }
+    ],
+    "id": "u9xhkybbl"
   }
 ] as RaceSession[],
   routes: [
