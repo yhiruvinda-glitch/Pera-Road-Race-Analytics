@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Athlete, RaceSession, EventStandard, Route } from '../types';
 import { formatTime, calculatePoints, sortEventsByDistance } from '../utils';
 import { Trophy, Calendar, MapPin, Medal, Map as MapIcon, List, Star, Filter } from 'lucide-react';
@@ -20,6 +20,7 @@ interface CourseRecordItem {
   venue?: string; // Optional to align with manual PBs if needed
 }
 
+// Added React import at the top to fix "Cannot find namespace 'React'" error
 export const RecordsList: React.FC<Props> = ({ athletes, sessions, standards, routes = [] }) => {
   const [viewMode, setViewMode] = useState<'events' | 'courses'>('events');
   const [filterMode, setFilterMode] = useState<'best' | 'all'>('best');

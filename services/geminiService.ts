@@ -1,40 +1,27 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { RaceSession, Athlete, EventStandard } from "../types";
 import { formatTime } from "../utils";
 
 const COACH_PERSONA = `
-You are an endurance coach, data analyst, and sports scientist for a university running team.
-Your job is to analyze performance, provide coaching advice, guide motivation, and track athlete progress using the team’s ranking system.
+You are a High-Performance Athletic Director and Sports Scientist for a elite University Running Team.
+Your job is to provide data-driven, actionable analysis using the team's custom points system.
 
-1. Parse and Understand the Data provided in the prompt.
-2. Use the Team’s Points System context (Points = 1000 * (GoldTime / Time)^kValue).
-3. Athlete-Specific Coaching Feedback:
-   - Identify Strengths & Weaknesses
-   - Analyze Fitness indicators
-   - Suggest Needed training focus
-   - Provide Race execution notes
-   - Assess Psychological readiness
-4. Team-Level Analysis:
-   - Team average points
-   - Point distribution
-   - Biggest improvements
-5. Training Prescription Behavior. Based on results, you MUST be able to suggest:
-   - VO₂max sessions
-   - Lactate threshold workouts
-   - Speed & neuromuscular drills
-   - Race-pace workouts
-   - Long-run plans
-   - Taper strategies
-   - Injury-safe alternatives (cycling, cross training)
-   - Make training progressive, evidence-based, distance-specific, and individually tailored.
-   - Address weakest areas collectively.
-   - Provide recommendations for group workouts.
-6. Your personality should be:
-   - Motivational but honest
-   - Data-driven
-   - Clear and concise
-   - No fluff, no generic motivation
-   - Coach-like authority + supportive tone
+### POINT SYSTEM CONTEXT
+- 1000 points = World-Class Gold Standard for that distance.
+- Points are calculated using a power-law decay (k-factor) to account for physiological endurance limits.
+- High points (>800) indicate elite collegiate performance.
+
+### OUTPUT REQUIREMENTS
+1. **Formatting**: You MUST use professional Markdown. Use Bold headings, bullet points, and Markdown TABLES for training schedules.
+2. **Structure**:
+   - **Executive Summary**: A high-level overview.
+   - **Performance Insights**: Analyze specific metrics (pace consistency, point trends).
+   - **Tactical Training Plan**: A structured 7-day table of workouts (VO2 Max, Threshold, Recovery, Long Run).
+   - **Motivational Guidance**: Coach-like encouragement based on the data.
+3. **Tone**: Direct, analytical, authoritative yet supportive. No generic "fluff."
+
+If data is missing for specific fields, infer based on the available history or note the gap.
 `;
 
 export const generateCoachingReport = async (
@@ -42,40 +29,38 @@ export const generateCoachingReport = async (
   subjectId: string | undefined,
   data: { sessions: RaceSession[], athletes: Athlete[], standards: EventStandard[] }
 ): Promise<string> => {
-  // Initialization: Always use process.env.API_KEY directly as per guidelines.
-  // The SDK expects a named parameter: { apiKey: string }
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  // Serialize Context
   const standardsContext = data.standards.map(s => `${s.name}: Gold=${formatTime(s.goldTime)} (k=${s.kValue})`).join("; ");
   
   let promptContext = "";
   
   if (type === 'team') {
-    // Summarize team data to avoid token limits if many sessions
-    const recentSessions = data.sessions.slice(0, 5); // Analyze last 5 sessions depth
-    const athleteSummaries = data.athletes.map(a => {
-        const raceCount = data.sessions.reduce((acc, s) => acc + (s.results.some(r => r.athleteId === a.id) ? 1 : 0), 0);
-        return `${a.name} (${a.faculty}): ${raceCount} races`;
+    const recentSessions = data.sessions.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+    const athleteSummaries = data.athletes.filter(a => a.isActive).map(a => {
+        const aResults = data.sessions.flatMap(s => s.results).filter(r => r.athleteId === a.id);
+        const avgPts = aResults.length > 0 ? Math.round(aResults.reduce((s, r) => s + r.points, 0) / aResults.length) : 0;
+        return `- ${a.name} (${a.faculty}): Avg ${avgPts} pts over ${aResults.length} events.`;
     }).join("\n");
 
     const sessionSummaries = recentSessions.map(s => {
        const evt = data.standards.find(st => st.id === s.eventId);
-       const winner = s.results.length > 0 ? data.athletes.find(a => a.id === s.results[0].athleteId)?.name : "Unknown";
-       return `Race: ${s.name} (${evt?.name}), Date: ${s.date}, Winner: ${winner}, Participants: ${s.results.length}`;
+       const winner = s.results.length > 0 ? data.athletes.find(a => a.id === s.results[0].athleteId)?.name : "N/A";
+       return `* ${s.name} (${evt?.name}) on ${s.date}: Winner ${winner}, ${s.results.length} participants.`;
     }).join("\n");
 
     promptContext = `
-      Data Context:
-      Event Standards: ${standardsContext}
+      STAKEHOLDER: TEAM OVERVIEW
       
-      Roster:
+      STANDARDS: ${standardsContext}
+      
+      ACTIVE ROSTER:
       ${athleteSummaries}
 
-      Recent Sessions:
+      RECENT COMPETITIONS:
       ${sessionSummaries}
 
-      Task: Provide a Team Overview and Strategic Plan for the upcoming training block. Focus on group weaknesses and collective improvements.
+      TASK: Analyze the team's current fitness block. Identify which faculty is dominating and provide a collective training strategy for the next 4 weeks to peak for an upcoming championship.
     `;
 
   } else if (type === 'session') {
@@ -85,37 +70,34 @@ export const generateCoachingReport = async (
     const evt = data.standards.find(st => st.id === session.eventId);
     const resultsContext = session.results.map(r => {
         const a = data.athletes.find(at => at.id === r.athleteId);
-        return `${r.rank}. ${a?.name || 'Unknown'} - Time: ${formatTime(r.time)} (${r.points} pts) [${r.tags.join(', ')}]`;
+        return `| ${r.rank} | ${a?.name || 'Unknown'} | ${formatTime(r.time)} | ${r.points} | ${r.tags.join(', ')} |`;
     }).join("\n");
 
     promptContext = `
-      Data Context:
-      Event Standards: ${standardsContext}
+      STAKEHOLDER: RACE SESSION ANALYSIS
+      EVENT: ${session.name} (${evt?.name})
+      DATE: ${session.date}
       
-      Analyzing Race Session:
-      Name: ${session.name}
-      Event: ${evt?.name}
-      Date: ${session.date}
-      Mandatory: ${session.isMandatory}
-      
-      Results:
+      RESULTS TABLE:
+      | Rank | Athlete | Time | Points | Tags |
+      |------|---------|------|--------|------|
       ${resultsContext}
 
-      Task: Provide a detailed post-race analysis. Identify standout performances, underperformers, and prescribe the training focus for the next week based on this race's demands.
+      TASK: Provide a technical debrief. Evaluate if the "Gold Standard" was challenged. Identify the "Mover of the Week" (biggest overperformer) and suggest immediate recovery protocols.
     `;
 
   } else if (type === 'athlete') {
     const athlete = data.athletes.find(a => a.id === subjectId);
     if (!athlete) return "Athlete not found.";
 
-    // Get athlete history
-    const raceHistory = data.sessions
-      .filter(s => s.results.some(r => r.athleteId === athlete.id))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Newest first
-      .map(s => {
-         const r = s.results.find(res => res.athleteId === athlete.id);
-         const evt = data.standards.find(st => st.id === s.eventId);
-         return `Date: ${s.date}, Race: ${s.name} (${evt?.name}), Time: ${formatTime(r?.time || 0)}, Points: ${r?.points}, Rank: ${r?.rank}`;
+    const athleteResults = data.sessions
+      .flatMap(s => s.results.map(r => ({ ...r, date: s.date, eventName: s.name, eventId: s.eventId })))
+      .filter(r => r.athleteId === athlete.id)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const raceHistory = athleteResults.map(r => {
+         const evt = data.standards.find(st => st.id === r.eventId);
+         return `- ${r.date}: ${r.eventName} (${evt?.name}) -> ${formatTime(r.time)} (${r.points} pts, Rank #${r.rank})`;
       }).join("\n");
 
     const pbs = athlete.personalBests.map(pb => {
@@ -124,33 +106,32 @@ export const generateCoachingReport = async (
     }).join(", ");
 
     promptContext = `
-      Data Context:
-      Event Standards: ${standardsContext}
+      STAKEHOLDER: INDIVIDUAL ATHLETE PERFORMANCE
+      ATHLETE: ${athlete.name} (${athlete.faculty}, Batch ${athlete.batch})
+      PERSONAL BESTS: ${pbs}
 
-      Analyzing Athlete: ${athlete.name}
-      Faculty: ${athlete.faculty}
-      Personal Bests: ${pbs}
-
-      Recent Race History:
+      COMPETITION HISTORY (Latest First):
       ${raceHistory}
 
-      Task: Provide a specific coaching report for this athlete. Analyze their progression, consistency, and points trajectory. Prescribe specific workouts to break their current plateaus.
+      TASK: Review this athlete's trajectory. Are they peaking or plateauing? Provide a highly specific 7-day training microcycle (in a Markdown table) designed to improve their specific weaknesses based on their race times.
     `;
   }
 
   try {
-    // Model Selection: Using 'gemini-3-pro-preview' for advanced reasoning and strategic coaching analysis.
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: promptContext,
       config: {
         systemInstruction: COACH_PERSONA,
+        temperature: 0.7,
       }
     });
-    // Accessing the generated text via the .text property as per guidelines.
-    return response.text || "No analysis generated.";
+    return response.text || "Report generation failed. Please verify data integrity.";
   } catch (error) {
     console.error("Gemini Coach Error:", error);
-    return "Error generating coaching insight. Please check your API configuration or try again later.";
+    if (error instanceof Error && error.message.includes("API_KEY")) {
+        return "API Key Error: Please ensure a valid Gemini API Key is configured in your environment.";
+    }
+    return "The Coach is currently unavailable. Please try again in a few minutes.";
   }
 };
